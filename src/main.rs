@@ -77,7 +77,7 @@ fn main() {
             &RandomExploration::new()
         );
         trial+=1;
-        if now.elapsed() > Duration::from_secs(21){
+        if now.elapsed() > Duration::from_secs(20){
             println!("Trial {trial} complete");
             break;
         }
