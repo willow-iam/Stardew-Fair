@@ -14,63 +14,63 @@ use std::time::Instant;
 mod value_iteration;
 
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
-struct WeightedCoinState{balance:u8}
+#[derive(PartialEq, Eq, Hash, Clone)]
+enum location {
+    Entrance, Slingshot, Smashing, Wheel
+}
 
 #[derive(PartialEq, Eq, Hash, Clone)]
-struct WeightedCoinAction {bet:u8}
+struct StardewFairState { g: u64, frames: u64, tokens: u64, current_location :location }
 
-impl State for WeightedCoinState{
-    type A = WeightedCoinAction;
+
+/// All fields must be 0 except 1. Not a union because rust doesn't let you derive
+/// stuff from unions.
+#[derive(PartialEq, Eq, Hash, Clone)]
+struct StardewFairAction {wheel_bet :u64, play :bool, next_location :location}
+
+impl State for StardewFairState{
+    type A = StardewFairAction;
     fn reward(&self) -> f64{
-        if self.balance==100 {1.0}
+        if self.tokens==2000 {1.0}
         else {0.0}
     }
-    //Set of available actions
-    fn actions(&self) -> Vec<WeightedCoinAction>{
-        let bet_range = {
-            if self.balance<50 {1..self.balance+1}//Python: range(1,self.balance+1)
-            else {1..(100-self.balance)+1}
-        };
-        return bet_range.map(|bet|WeightedCoinAction{bet:bet}).collect();
-    }
-}
+    fn actions(&self) -> Vec<StardewFairAction>{
+        let mut actions = Vec::<StardewFairAction>::new();
+        if self.current_location == location::Entrance {
+            println!("Set of actions for going to other location");
+            actions.push(StardewFairAction{wheel_bet:0,play:false,next_location:location::Slingshot});
+            actions.push(StardewFairAction{wheel_bet:0,play:false,next_location:location::Smashing});
+            actions.push(StardewFairAction{wheel_bet:0,play:false,next_location:location::Wheel});
+        } else if self.current_location == location::Slingshot {
+            println!("Set of actions for playing slingshot");
+            println!("Also include a set of actions for going to other location");
+            actions.push(StardewFairAction{wheel_bet:0,play:false,next_location:location::Entrance});
+            actions.push(StardewFairAction{wheel_bet:0,play:false,next_location:location::Smashing});
+            actions.push(StardewFairAction{wheel_bet:0,play:false,next_location:location::Wheel});
 
-struct WeightedCoinAgent{state: WeightedCoinState, weight:u8}
-impl Agent<WeightedCoinState> for WeightedCoinAgent{
-    //getter
-    fn current_state(&self) -> &WeightedCoinState {
-		&self.state
-	}
+            actions.push(StardewFairAction { wheel_bet:0, play: true, next_location: location::Slingshot});
+            //let result_range = 180 .. 240;    // # Tokens obtained from samples of speedrunners was to get
+        } else if self.current_location == location::Smashing {
+            println!("Set of actions for playing smashing");
+            println!("Also include a set of actions for going to other location");
+            actions.push(StardewFairAction{wheel_bet:0,play:false,next_location:location::Entrance});
+            actions.push(StardewFairAction{wheel_bet:0,play:false,next_location:location::Slingshot});
+            actions.push(StardewFairAction{wheel_bet:0,play:false,next_location:location::Wheel});
 
-	fn take_action(&mut self, action: &WeightedCoinAction) -> () {
-        //Update the state to:
-        self.state = WeightedCoinState { balance : 
-            if rand::random::<u8>() <= self.weight {self.state.balance+action.bet}
-            //If the coin is heads, balance + bet
-            else {self.state.balance-action.bet}
-            //If the coin is tails, balance - bet
+            actions.push(StardewFairAction { wheel_bet:0, play: true, next_location: location::Smashing});
+        } else {
+            println!("Set of actions for all possible bets for wheel");
+            println!("Also include a set of actions for going to other location");
+            actions.push(StardewFairAction{wheel_bet:0,play:false,next_location:location::Entrance});
+            actions.push(StardewFairAction{wheel_bet:0,play:false,next_location:location::Smashing});
+            actions.push(StardewFairAction{wheel_bet:0,play:false,next_location:location::Slingshot});
+
+            for bet in 1..self.tokens{
+                actions.push(StardewFairAction{wheel_bet:bet,play:true,next_location:location::Wheel});
+            }
+
         }
-	}
-}
-
-/**
- * 
- */
-struct WeightedCoinTermination{}
-impl TerminationStrategy<WeightedCoinState> for WeightedCoinTermination{
-    fn should_stop(&mut self, state:&WeightedCoinState) -> bool {
-        if state.balance==0 || state.balance==100{
-            return true;
-        }
-
-        //Error checking for other apparent sink states
-        if state.actions().len()==0{
-            println!("{}",state.balance);
-            return true;
-        }
-
-        return false;
+        return actions;
     }
 }
 
@@ -105,24 +105,24 @@ fn main() {
         );
     }*/
 
-    let state_space:Vec<WeightedCoinState> = (0..101).map(|i|WeightedCoinState{balance:i}).collect();
-    let mut map = HashMap::new();
-    for state in &state_space.clone(){
-        map.insert(*state,{if state.balance==100 {1.0} else {0.0}});
+    let state_space:Vec<StardewFairState>=Vec::new();//TODO: State space
+
+    let mut values = HashMap::new();
+    for state in state_space.clone(){
+        //TODO:initial reward values
     };
 
-    let mut CoinValueIterator:ValueIterator<WeightedCoinState> = ValueIterator{
-        state_space:state_space,
-        values:map
+    let mut StardewFairValueIterator:ValueIterator<StardewFairState> = ValueIterator{
+        state_space:state_space.clone(),
+        values:values
     };
 
-    let action_results = |state:&WeightedCoinState, action:&WeightedCoinAction|
-    vec![(weight,WeightedCoinState{balance:state.balance+action.bet}),
-    (1.0-weight,WeightedCoinState{balance:state.balance-action.bet})];
+    let action_results = |state:&StardewFairState, action:&StardewFairAction|
+    vec![];//TODO: transition model
 
     const weight:f64=0.25;
     for trial in 1..TRIALS+1{
-        CoinValueIterator.iterate(
+        StardewFairValueIterator.iterate(
             action_results
         );
         if trial % 100 == 0{
@@ -130,9 +130,9 @@ fn main() {
         }
     }
     println!("Balance\tAction\tValue");
-    for i in 1..100{
-        let state = WeightedCoinState{balance:i};
-        println!("{i}\t{}\t{}",CoinValueIterator.best_action(&state, action_results).bet,CoinValueIterator.value(state));
+    for state in state_space{
+        //TODO: Print actions for statespace
+        //println!("{i}\t{}\t{}",StardewFairValueIterator.best_action(&state, action_results).bet,StardewFairValueIterator.value(state));
     }
     
 }
