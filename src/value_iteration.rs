@@ -43,9 +43,11 @@ impl<S:State> StatespaceIterator<S> for ValueIterator<S>{
 
     fn iterate(&mut self, action_results : fn(&S, &S::A) -> Vec<(f64,S)>){
         let mut new_values:HashMap<S, f64> =HashMap::new();
-        for state in self.state_space.clone(){
-            if((&state).actions().is_empty()) {
-                new_values.insert(state.clone(),*self.values.get(&state).unwrap());
+        let mut i=0;
+        for state in &self.state_space{
+            let state_clone=state.clone();
+            if(&state).actions().is_empty() {
+                new_values.insert(state_clone,*self.values.get(state).unwrap());
             }
             else{
                 let best_value = state.actions().iter().map(
@@ -53,7 +55,11 @@ impl<S:State> StatespaceIterator<S> for ValueIterator<S>{
                     action_results_value(action_results(&state,&action), &self.values).to_bits()
                 ).max().unwrap();
                 //converts to and from bits becuase rust doesn't know how to compare floats.
-                new_values.insert(state,f64::from_bits(best_value));
+                new_values.insert(state_clone,f64::from_bits(best_value));
+            }
+            i=i+1;
+            if i%100000==0{
+                println!("\tChecked {i} states");
             }
         }
         self.values=new_values.clone();

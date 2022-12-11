@@ -83,25 +83,19 @@ impl State for StardewFairState{
 fn main() {
     println!("Begin setup");
     const TRIALS:usize=1000;
-    let mut state_space:Vec<StardewFairState>=Vec::new();
+    let mut state_space:Vec<StardewFairState>=Vec::new();//TODO: State space
+    let mut gold = 0;
 
-    for secs in 0..330 {
-        println!("Adding states for {secs} secs.");
-        let mut gold = 0;
-        while gold <= 500 {
-            let plays = (500 - gold)/50;
-            let max_plays = secs/63;
-            //Don't add infeasible states where it's impossible to have spent that much gold
-            if(plays <= max_plays) {
-                for t in 0..2241 {
-                    state_space.push(StardewFairState{g:gold, seconds:secs, tokens:t, current_location:location::Entrance});
-                    state_space.push(StardewFairState{g:gold, seconds:secs, tokens:t, current_location:location::Slingshot});
-                    state_space.push(StardewFairState{g:gold, seconds:secs, tokens:t, current_location:location::Smashing});
-                    state_space.push(StardewFairState{g:gold, seconds:secs, tokens:t, current_location:location::Wheel});
-                }
+    while gold < 500 {
+        for secs in 0..330 {
+            for t in 0..2241 {
+                state_space.push(StardewFairState{g:gold, seconds:secs, tokens:t, current_location:location::Entrance});
+                state_space.push(StardewFairState{g:gold, seconds:secs, tokens:t, current_location:location::Slingshot});
+                state_space.push(StardewFairState{g:gold, seconds:secs, tokens:t, current_location:location::Smashing});
+                state_space.push(StardewFairState{g:gold, seconds:secs, tokens:t, current_location:location::Wheel});
             }
-            gold = gold + 50;
         }
+        gold = gold + 50;
     }
     println!("Defined statespace");
 
@@ -229,7 +223,6 @@ fn main() {
             //TODO: Print actions for statespace
             //println!("{i}\t{}\t{}",StardewFairValueIterator.best_action(&state, action_results).bet,StardewFairValueIterator.value(state));
             let tokens =state.tokens;
-            let seconds= state.seconds;
             let g = state.g;
             let location=&state.current_location;
             let value = StardewFairValueIterator.value(state.clone());
@@ -237,10 +230,10 @@ fn main() {
             let mut play = false;
             let mut next_location = 
                 match state.current_location{
-                    (location::Entrance) => {"E"}
-                    (location::Slingshot) => {"S"}
-                    (location::Smashing) => {"R"}
-                    (location::Wheel) => {"W"}
+                    (location::Entrance) => {"Entrance"}
+                    (location::Slingshot) => {"Slingshot"}
+                    (location::Smashing) => {"Smashing"}
+                    (location::Wheel) => {"Wheel"}
                 };
                 if !state.actions().is_empty() {
                     let action = StardewFairValueIterator.best_action(state, action_results);
@@ -248,10 +241,10 @@ fn main() {
                     play=action.play;
                     next_location = {
                         match action.next_location{
-                            (location::Entrance) => {"E"}
-                            (location::Slingshot) => {"S"}
-                            (location::Smashing) => {"R"}
-                            (location::Wheel) => {"W"}
+                            (location::Entrance) => {"Entrance"}
+                            (location::Slingshot) => {"Slingshot"}
+                            (location::Smashing) => {"Smashing"}
+                            (location::Wheel) => {"Wheel"}
                         }
                     }
                 };
@@ -260,25 +253,25 @@ fn main() {
 
             match location{
                 (location::Entrance) => {
-                    writeln!(output, "{seconds}\t{tokens}\t{g}\tE\t\t{value}\t");
-                    writeln!(output, "\t{next_location}");
+                    writeln!(output, "Tokens:{tokens}\tg:{g}\tLocation:Entrance\tvalue:{value}\t");
+                    writeln!(output, "\tnext_location:{next_location}");
 
                 }
                 (location::Slingshot) => {
-                    writeln!(output, "{seconds}\t{tokens}\t{g}\tS\t\t{value}\t");
+                    writeln!(output, "Tokens:{tokens}\tg:{g}\tLocation:Slingshot\tvalue:{value}\t");
                     if(play){writeln!(output,"\tPlay");}
-                    else{writeln!(output, "\t{next_location}");}
+                    else{writeln!(output, "\tnext_location:{next_location}");}
 
                 }
                 (location::Smashing) => {
-                    writeln!(output, "{seconds}\t{tokens}\t{g}\tR\t\t{value}\t");
+                    writeln!(output, "Tokens:{tokens}\tg:{g}\tLocation:Smashing\tvalue:{value}\t");
                     if(play){writeln!(output,"\tPlay");}
-                    else{writeln!(output, "\t{next_location}");}
+                    else{writeln!(output, "\tnext_location:{next_location}");}
                 }
                 (location::Wheel) => {
-                    writeln!(output, "{seconds}\t{tokens}\t{g}\tW\t\t{value}\t");
-                    if(play){writeln!(output,"{wheel_bet}");}
-                    else{writeln!(output, "\t{next_location}");}
+                    writeln!(output, "Tokens:{tokens}\tg:{g}\tLocation:Wheel\tvalue:{value}\t");
+                    if(play){writeln!(output,"\tBet {wheel_bet}");}
+                    else{writeln!(output, "\tnext_location:{next_location}");}
 
                 }
             }
